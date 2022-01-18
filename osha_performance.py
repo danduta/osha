@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from osha.osha import hash
 import hashlib
 from statistics import stdev
+import numpy as np
 
 message = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent finibus sollicitudin mauris ut pellentesque. Curabitur vel \
     augue quis magna placerat ultrices vel id leo. Fusce eget dignissim ex. Fusce non luctus felis, nec fringilla lectus. Quisque \
@@ -12,10 +13,10 @@ message = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent fin
     lobortis est molestie quis. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos.'
 
 
-def plot_performance_osha(show):
+def plot_performance_output_size_osha(show):
     plt.xlabel('Output size (bits)')
     plt.ylabel('Time (ms)')
-    plt.title('OSHA function performance and time complexity - O(bitsize)')
+    plt.title('OSHA function performance by output size')
 
     times = []
     for i in range(3, 13):
@@ -83,18 +84,51 @@ def plot_performance_comparison_osha(show):
         times_blake_2s.append((t1 - t0) * 1000)
 
     x = [1 << i for i in range(3, input_len)]
-    plt.plot(x, times_osha)
-    # plt.plot(x, times_md5, 'red', label='MD5')
-    # plt.plot(x, times_sha3_256, 'green', label='SHA3-256')
-    # plt.plot(x, times_sha3_512, 'blue', label='SHA3-512')
-    # plt.plot(x, times_shake_256, 'yellow', label='SHAKE 256')
-    # plt.plot(x, times_blake_2b, 'brown', label='BLAKE 2b')
-    # plt.plot(x, times_blake_2s, 'black', label='BLAKE 2s')
+    # plt.plot(x, times_osha)
+    plt.plot(x, times_md5, 'red', label='MD5')
+    plt.plot(x, times_sha3_256, 'green', label='SHA3-256')
+    plt.plot(x, times_sha3_512, 'blue', label='SHA3-512')
+    plt.plot(x, times_shake_256, 'yellow', label='SHAKE 256')
+    plt.plot(x, times_blake_2b, 'brown', label='BLAKE 2b')
+    plt.plot(x, times_blake_2s, 'black', label='BLAKE 2s')
 
     plt.legend()
 
     if show:
         plt.show()
+
+
+def plot_performance_input_size_osha():
+
+    plt.xlabel('Input size (bytes)')
+    plt.ylabel('Time (ms)')
+
+    input_len = 20
+
+    inputs = list()
+    times_osha = list()
+
+    for i in range(1000, 1 << input_len, 1000):
+        message = randbytes(i)
+
+        t0 = time()
+        hash(message, 256)
+        t1 = time()
+        times_osha.append((t1 - t0) * 1000)
+        inputs.append(i)
+
+    coef = np.polyfit(inputs, times_osha, 1)
+    p = np.poly1d(coef)
+    from sklearn.metrics import r2_score
+    r_2 = r2_score(times_osha, p(inputs))
+    print(r_2)
+
+    plt.title('OSHA-256 function performance by input size')
+    plt.plot(inputs, times_osha, 'bo', inputs, p(inputs), 'r--', markersize=0.5)
+    plt.xlim(0, 1 << input_len)
+    plt.ylim(0, 10)
+
+    plt.show()
 
 
 def collisions_osha(samples, outsize, keysize):
@@ -134,6 +168,5 @@ def plot_collisions_osha(show):
         plt.show()
 
 
-# plot_collisions_osha()
-# plot_performance_osha()
-plot_performance_comparison_osha(True)
+if __name__ == '__main__':
+    plot_performance_input_size_osha()
