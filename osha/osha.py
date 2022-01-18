@@ -9,10 +9,9 @@ def __gen_prng(message, seed, size):
     bin_res = 0
 
     for i in range(size):
-        d = murmur(message if isinstance(message, str) else message.to_bytes(16, 'big'), seed, signed=False)
-        message = d
-        e = murmur(message.to_bytes(16, 'big'), seed, signed=False)
-        message = d << d.bit_length() | e
+        d = murmur(message, seed, signed=False)
+        e = murmur(d.to_bytes(16, 'big'), seed, signed=False)
+        message = (d << d.bit_length() | e).to_bytes(16, 'big')
         seed = abs(d - e)
         bin_res = bin_res | (((d & 1) ^ 1) << i)
 
@@ -45,7 +44,7 @@ def hash(message, size):
         else:
             tau = __rotate_right(tau, rotations, size)
 
-        message = str(hashed_message)
+        message = hashed_message.to_bytes(16, 'big')
         
         hashed_message = murmur(message, seed, signed=False)
         tau = tau ^ __gen_prng(message, seed, size)
